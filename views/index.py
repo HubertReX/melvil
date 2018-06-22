@@ -37,6 +37,11 @@ from models.library import RentalLog, Copy, BookStatus
 from models.books import Book
 from models.users import User
 from models.wishlist import WishListItem, Like
+from models.decorators_roles import (
+    require_logged_in,
+    require_not_logged_in,
+    require_role
+)
 from send_email import send_confirmation_email, send_password_reset_email
 from send_email.emails import send_email
 from serializers.wishlist import WishListItemSchema
@@ -51,6 +56,7 @@ def index():
 
 
 @library.route('/login', methods=['GET', 'POST'])
+@require_not_logged_in()
 def login():
     if request.method == 'GET':
         if 'logged_in' in session:
@@ -100,6 +106,7 @@ def login():
 
 
 @library.route('/registration', methods=['GET', 'POST'])
+@require_not_logged_in()
 def registration():
     if request.method == 'GET':
         form = RegistrationForm()
@@ -145,6 +152,7 @@ def registration():
 
 
 @library.route('/search', methods=['GET'])
+@require_logged_in()
 def search():
     if request.method == 'GET':
         try:
@@ -208,12 +216,14 @@ def contact():
 
 
 @library.route('/logout')
+@require_logged_in()
 def logout():
     session.clear()
     return render_template('index.html')
 
 
 @library.route('/confirm/<token>')
+@require_not_logged_in()
 def confirm_email(token):
     try:
         confirm_serializer = URLSafeTimedSerializer(DevConfig.SECRET_KEY)
@@ -247,6 +257,7 @@ def confirm_email(token):
 
 
 @library.route('/reset', methods=['GET', 'POST'])
+@require_not_logged_in()
 def reset():
     form = ForgotPass()
     if form.validate_on_submit():
@@ -277,6 +288,7 @@ def reset():
 
 
 @library.route('/reset/<token>', methods=["GET", "POST"])
+@require_not_logged_in()
 def reset_with_token(token):
     try:
         password_reset_serializer = URLSafeTimedSerializer(
@@ -316,6 +328,7 @@ def reset_with_token(token):
 
 
 @library.route('/reservation/<copy_id>')
+@require_logged_in()
 def reserve(copy_id):
     if 'logged_in' in session:
         try:
@@ -337,6 +350,7 @@ def reserve(copy_id):
 
 
 @library.route('/remove_item/<int:item_id>', methods=['GET', 'POST'])
+@require_role('ADMIN')
 def remove_item(item_id):
     try:
         user = User.query.get(session['id'])
@@ -363,6 +377,7 @@ def remove_item(item_id):
 
 @library.route('/remove_copy/<int:item_id>/<int:copy_id>',
                methods=['GET', 'POST'])
+@require_role('ADMIN')
 def remove_copy(item_id, copy_id):
     try:
         user = User.query.get(session['id'])
@@ -390,6 +405,7 @@ def remove_copy(item_id, copy_id):
 
 
 @library.route('/wishlist', methods=['GET', 'POST'])
+@require_logged_in()
 def wishlist():
     try:
         user = User.query.get(session['id'])
@@ -406,6 +422,7 @@ def wishlist():
 
 
 @library.route('/addWish', methods=['GET', 'POST'])
+@require_logged_in()
 def add_wish():
     form = WishlistForm()
     if form.validate_on_submit():
@@ -426,6 +443,7 @@ def add_wish():
 
 
 @library.route('/addLike', methods=['GET', 'POST'])
+@require_logged_in()
 def add_like():
     wish_id = request.form['wish_id']
     user = User.query.filter_by(id=session['id']).first()
@@ -445,6 +463,7 @@ def add_like():
 
 
 @library.route('/deleteWish/<int:wish_id>', methods=['GET', 'POST'])
+@require_role('ADMIN')
 def delete_wish(wish_id):
     try:
         WishListItem.deleteWish(wish_id)
@@ -454,6 +473,7 @@ def delete_wish(wish_id):
 
 
 @library.route('/item_description/<int:item_id>')
+@require_role('ADMIN')
 def item_description(item_id):
     try:
         user = User.query.get(session['id'])
@@ -477,6 +497,7 @@ def item_description(item_id):
 
 
 @library.route('/add_copy/<int:item_id>', methods=['GET', 'POST'])
+@require_role('ADMIN')
 def add_copy(item_id):
     form = CopyAddForm()
     if form.validate_on_submit():
@@ -502,6 +523,7 @@ def add_copy(item_id):
 
 
 @library.route('/edit_copy/<int:copy_id>', methods=['GET', 'POST'])
+@require_role('ADMIN')
 def edit_copy(copy_id):
     copy = Copy.query.get_or_404(copy_id)
     item_id = copy.library_item_id

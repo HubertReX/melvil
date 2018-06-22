@@ -5,6 +5,11 @@ from datetime import datetime
 from models.books import Book, Author
 from models.magazines import Magazine
 from models.library import Tag
+from models.decorators_roles import (
+    require_logged_in,
+    require_not_logged_in,
+    require_role
+)
 from init_db import db
 
 library_books = Blueprint('library_books', __name__,
@@ -12,6 +17,7 @@ library_books = Blueprint('library_books', __name__,
 
 
 @library_books.route('/add_book', methods=['GET', 'POST'])
+@require_logged_in()
 def add_book():
     if request.method == 'GET':
         if 'logged_in' not in session:
