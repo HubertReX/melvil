@@ -17,7 +17,7 @@ library_books = Blueprint('library_books', __name__,
 
 
 @library_books.route('/add_book', methods=['GET', 'POST'])
-@require_logged_in()
+@require_role('gitADMIN')
 def add_book():
     if request.method == 'GET':
         if 'logged_in' not in session:
