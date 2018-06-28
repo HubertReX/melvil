@@ -10,7 +10,9 @@ from forms.book import BookForm, MagazineForm
 from models.users import Role, RoleEnum
 
 
-def test_add_book(view_book, client, db_user, app):
+def test_add_book(view_book, client, db_user):
+
+    """ session and user role modification"""
 
     with client.session_transaction() as session:
         role_admin = Role.query.filter_by(name=RoleEnum.ADMIN).first()
@@ -19,8 +21,13 @@ def test_add_book(view_book, client, db_user, app):
         client.post(url_for('library_books.add_book'),
                     data=view_book.data,
                     follow_redirects=True)
+
+    """deleting data not needed for book"""
+
     del view_book.issue
     del view_book.title_of_magazine
+
+    """extracting data from db and validating it"""
 
     author = Author.query.filter_by(first_name=view_book.first_name.data,
                                     last_name=view_book.surname.data).first()

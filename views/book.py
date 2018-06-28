@@ -13,7 +13,7 @@ library_books = Blueprint('library_books', __name__,
 
 
 @library_books.route('/add_book', methods=['GET', 'POST'])
-# @require_role('ADMIN')
+@require_role('ADMIN')          # <--- comment this and test will work
 def add_book():
     if request.method == 'GET':
         if 'logged_in' not in session:
