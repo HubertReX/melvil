@@ -7,14 +7,18 @@ import pytest
 from models import Author, Book, Tag, Magazine, LibraryItem
 from forms.book import BookForm, MagazineForm
 
+from models.users import Role, RoleEnum
 
-def test_add_book(view_book, client):
-    view_book.radio.data = 'book'
 
-    client.post(url_for('library_books.add_book'),
-                data=view_book.data,
-                follow_redirects=True)
+def test_add_book(view_book, client, db_user, app):
 
+    with client.session_transaction() as session:
+        role_admin = Role.query.filter_by(name=RoleEnum.ADMIN).first()
+        db_user.roles.append(role_admin)
+        session['id'] = db_user.id
+        client.post(url_for('library_books.add_book'),
+                    data=view_book.data,
+                    follow_redirects=True)
     del view_book.issue
     del view_book.title_of_magazine
 
